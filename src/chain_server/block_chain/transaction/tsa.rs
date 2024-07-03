@@ -1,12 +1,14 @@
 use core::{panic, task};
 use std::{os::windows::raw::SOCKET, vec};
 use rand::{random, Rng};
+use serde::Serialize;
+#[derive(Clone,Debug,Serialize)]
 pub struct Puzzle{
     tasks:Vec<i32>,
     vms:Vec<i32>,
     expect:f32,
 }
-#[derive(Clone)]
+#[derive(Clone,Debug,Serialize)]
 pub struct Solution{
     pub assign:Vec<Vec<(i32,i32)>>,
     task_weight:Vec<i32>,
