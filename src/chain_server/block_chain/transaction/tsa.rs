@@ -4,9 +4,9 @@ use rand::{random, Rng};
 use serde::Serialize;
 #[derive(Clone,Debug,Serialize)]
 pub struct Puzzle{
-    tasks:Vec<i32>,
-    vms:Vec<i32>,
-    expect:f32,
+    pub tasks:Vec<i32>,
+    pub vms:Vec<i32>,
+    pub expect:f32,
 }
 #[derive(Clone,Debug,Serialize)]
 pub struct Solution{
@@ -46,6 +46,26 @@ impl Solution {
                     break;
                 }
             }
+        }
+        let mut output=Self{
+            assign:assign,
+            task_weight:tasks,
+            velocity:velocity,
+            max_response_time:0.0,
+        };
+        output.update_max_response_time();
+        return output;
+    }
+
+    pub fn new_default(vms:Vec<i32>,tasks:Vec<i32>)->Self{
+        let mut assign=vec![vec![(-1,-1);tasks.len()+1];vms.len()];
+        let velocity=vec![(0,0);tasks.len()];
+        for i in 0..vms.len(){
+            assign[i][0]=(vms[i],0);
+        }
+        //默认初始化
+        for task_num in 0..tasks.len(){
+            assign[0][task_num+1]=(task_num as i32,-1);
         }
         let mut output=Self{
             assign:assign,
