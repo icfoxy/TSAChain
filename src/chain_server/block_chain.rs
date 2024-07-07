@@ -5,12 +5,14 @@ use std::{thread, time::Duration};
 
 use block::Block;
 use rand::Rng;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::Receiver;
 use transaction::Transaction;
+#[derive(Serialize,Clone,Deserialize)]
 pub struct BlockChain {
-    transaction_pool: Vec<Transaction>,
-    reward_pool: Vec<Transaction>,
-    chain: Vec<Block>,
+    pub transaction_pool: Vec<Transaction>,
+    pub reward_pool: Vec<Transaction>,
+    pub chain: Vec<Block>,
 }
 
 impl BlockChain {
@@ -104,6 +106,10 @@ impl BlockChain {
         );
         self.reward_pool.clear();
         self.chain.push(new_block);
+    }
+
+    pub fn get_last_block(&self)->&Block{
+        return self.chain.last().clone().unwrap();
     }
 
     pub fn print(&self) {

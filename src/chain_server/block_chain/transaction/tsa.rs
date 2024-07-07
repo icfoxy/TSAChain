@@ -26,6 +26,27 @@ impl Puzzle {
     }
 }
 
+impl PartialEq for Puzzle {
+    fn eq(&self, other: &Self) -> bool {
+        self.tasks == other.tasks
+            && self.vms == other.vms
+            && (self.expect - other.expect).abs() < std::f32::EPSILON
+    }
+}
+
+impl Eq for Puzzle {}
+
+impl PartialEq for Solution {
+    fn eq(&self, other: &Self) -> bool {
+        self.assign == other.assign
+            && self.task_weight == other.task_weight
+            && self.velocity == other.velocity
+            && (self.max_response_time - other.max_response_time).abs() < std::f32::EPSILON
+    }
+}
+
+impl Eq for Solution {}
+
 impl Solution {
     pub fn new(vms:Vec<i32>,tasks:Vec<i32>)->Self{
         let mut assign=vec![vec![(-1,-1);tasks.len()+1];vms.len()];

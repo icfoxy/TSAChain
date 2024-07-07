@@ -1,16 +1,16 @@
 use std::time::{ SystemTime, UNIX_EPOCH };
 use bincode::{ self, serialize };
 use ring::{ digest::{ digest, SHA256 }, signature };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::transaction::Transaction;
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize,Deserialize)]
 pub struct Block {
     block_num: usize,
     pre_hash: Vec<u8>,
-    transactions: Vec<Transaction>,
-    timestamp: u128,
+    pub transactions: Vec<Transaction>,
+    pub timestamp: u128,
 }
 impl Block {
     pub fn new(block_num: usize, pre_hash: Vec<u8>, transactions: Vec<Transaction>) -> Self {

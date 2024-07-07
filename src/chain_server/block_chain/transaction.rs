@@ -7,14 +7,14 @@ use tokio::sync::mpsc::{error::TryRecvError, Receiver};
 use tsa::{ do_tsa, Puzzle, Solution };
 
 use crate::wallet_server::wallet::Wallet;
-#[derive(Clone, Serialize, Debug, Deserialize)]
+#[derive(Clone, Serialize, Debug, Deserialize,PartialEq, Eq)]
 pub struct Transaction {
     pub info: Info,
     pub winner_addr: String,
     pub best_solution: Solution,
     pub sender_signature: Vec<u8>,
 }
-#[derive(Clone, Serialize, Debug, Deserialize)]
+#[derive(Clone, Serialize, Debug, Deserialize,PartialEq, Eq)]
 pub struct Info {
     pub sender_addr: String,
     pub sender_public_key: String,
@@ -79,7 +79,8 @@ impl Transaction {
         println!("to:{}", self.info.receiver_addr);
         println!("value:{}", self.info.value);
         println!("winner addr:{}", self.winner_addr);
-        println!("signature:{:?}", Wallet::signature_to_string(&self.sender_signature));
+        // println!("signature:{:?}", Wallet::signature_to_string(&self.sender_signature));
+        println!("signature:...");
         println!("solution:");
         self.best_solution.print();
     }
