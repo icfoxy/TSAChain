@@ -278,8 +278,63 @@ pub fn do_tsa(puzzle:&Puzzle,unit_num:usize,times:usize)->Option<Solution>{
             }
         }
     }
+    do_hrrn(&mut best);
     return Some(best);
 }
+
+#[allow(dead_code)]
+pub fn do_hrrn(solution:&mut Solution){
+    let mut task_cache:Vec<i32>=Vec::new();
+    let mut rates:Vec<f32>=Vec::new();
+    let mut now_j:usize=1;
+    let mut now_z:usize=1;
+    for vm_num in 0..solution.assign.len(){
+        //取出任务
+        for i in 1..solution.assign[0].len(){
+            if solution.assign[vm_num][i].0!=-1{
+                task_cache.push(solution.assign[vm_num][i].0);
+                solution.assign[vm_num][i].0=-1;
+                rates.push(0.0);
+            }
+            if solution.assign[vm_num][i].1!=-1{
+                task_cache.push(solution.assign[vm_num][i].1);
+                solution.assign[vm_num][i].1=-1;
+                rates.push(0.0);
+            }
+        }
+        //HRRN
+        solution.assign[vm_num][1].0=task_cache[0];
+        let waiting_time:f32=solution.task_weight[task_cache[0] as usize] as f32;
+        task_cache.remove(0);
+        rates.remove(0);
+        while task_cache.len()!=0{
+            for i in 0..task_cache.len(){
+                rates[i]=1.0+waiting_time/solution.task_weight[task_cache[i] as usize] as f32;
+            }
+            let mut best_i:usize=0;
+            let mut best_rate=0.0;
+            for i in 0..rates.len(){
+                if best_rate<rates[i]{
+                    best_rate=rates[i];
+                    best_i=i;
+                }
+            }
+            if now_z==0{
+                solution.assign[vm_num][now_j].0=task_cache[best_i];
+                now_z=1;
+            }else{
+                solution.assign[vm_num][now_j].1=task_cache[best_i];
+                now_z=0;
+                now_j+=1;
+            }
+            task_cache.remove(best_i);
+            rates.remove(best_i);
+        }
+        now_j=1;
+        now_z=1;
+    }
+}
+
 //TODO:
 fn find_index(task_num:i32,assign:&Vec<Vec<(i32,i32)>>)->(usize,usize,i32){
     for i in 0..assign.len(){

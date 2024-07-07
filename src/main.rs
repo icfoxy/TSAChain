@@ -2,7 +2,7 @@ use std::{
     convert::Infallible, fs::File, net::SocketAddr, sync::Mutex, time::Duration
 };
 use hyper::Server;
-use chain_server::{ask_for_chain_update, block_chain::BlockChain};
+use chain_server::{ask_for_chain_update, block_chain::{transaction::tsa::{do_hrrn, do_tsa, Puzzle}, BlockChain}};
 use hyper::service::{ make_service_fn, service_fn };
 use serde::Deserialize;
 use tokio::sync::mpsc::{Receiver, Sender};
@@ -116,4 +116,11 @@ async fn main() {
     let receiver=&mut CHANNEL.1.lock().unwrap();
     println!("server starts at {:?}:{}",addr,port);
     tokio::join!(start_chain_server(addr.clone(),port),start_wallet_server(addr.clone(),port+1),start_mining(receiver));
+    
+    //演示代码，启用此块并注释其他，可以演示单个puzzle的解题过程
+    // let vms=vec![20,30,20,10];
+    // let tasks=vec![100,200,300,5000,300,200,4000,3000,2000,2000,4000,1000,4000,200,300,100,400,500,400,300,500];
+    // let puzzle=Puzzle::new(tasks, vms, 0.5);
+    // let mut best=do_tsa(&puzzle, 20, 200).unwrap();
+    // best.print();
 }
