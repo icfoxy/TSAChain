@@ -1,6 +1,5 @@
-use core::{panic, task};
-use std::{os::windows::raw::SOCKET, vec};
-use rand::{random, Rng};
+use std::vec;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct Puzzle{
@@ -130,8 +129,8 @@ impl Solution {
         for task_num in 0..self.task_weight.len(){
             let mut rng = rand::thread_rng();
             let r: i32 = rng.gen_range(1..5);
-            let (best_i,best_j,best_z)=find_index(task_num as i32, best_assign);
-            let (this_i,this_j,this_z)=find_index(task_num as i32, &self.assign);
+            let (best_i,best_j,_)=find_index(task_num as i32, best_assign);
+            let (this_i,this_j,_)=find_index(task_num as i32, &self.assign);
             let mut new_i_speed=(self.velocity[task_num].0)+(best_i as i32-this_i as i32)/r;
             let mut new_j_speed=self.velocity[task_num].1+(best_j as i32-this_j as i32)/r;
             let rand_i: i32 = rng.gen_range(-((self.assign.len()/2) as i32)..((self.assign.len()/2) as i32));
@@ -225,6 +224,7 @@ impl Solution {
         return self.max_response_time;
     }
 
+    #[allow(dead_code)]
     pub fn print_assign(&self){
         for i in 0..self.assign.len() {
             for j in 0..self.assign[i].len() {
@@ -249,7 +249,8 @@ impl Solution {
         }
         println!();
     }
-
+    
+    #[allow(dead_code)]
     pub fn print_velocity(&self){
         println!("velocity: {:?}", self.velocity);
     }

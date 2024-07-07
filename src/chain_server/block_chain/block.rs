@@ -1,6 +1,6 @@
 use std::time::{ SystemTime, UNIX_EPOCH };
 use bincode::{ self, serialize };
-use ring::{ digest::{ digest, SHA256 }, signature };
+use ring::digest::{ digest, SHA256 };
 use serde::{Deserialize, Serialize};
 
 use super::transaction::Transaction;

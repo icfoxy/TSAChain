@@ -53,6 +53,7 @@ impl Wallet {
         transaction.sender_signature=signature;
     }
 
+    #[allow(dead_code)]
     pub fn create_signed_transaction(
         &self,sender_addr:String,receiver_addr:String,puzzle:Puzzle,value:i32
         )->Transaction{
@@ -62,10 +63,12 @@ impl Wallet {
         return transaction;
     }
 
+    #[allow(dead_code)]
     pub fn signature_to_string(signature:&Vec<u8>)->String{
         base64::encode(signature)
     }
 
+    #[allow(dead_code)]
     pub fn string_to_signature(signature_str:&String)->Vec<u8>{
         base64::decode(signature_str).unwrap()
     }
@@ -75,6 +78,8 @@ impl Wallet {
         let hash = Sha256::digest(&bytes);
         hex::encode(hash)
     }
+
+    #[allow(dead_code)]
     pub fn print(&self) {
         println!("Wallet:");
         println!("  Private Key: {:?}", Wallet::private_key_to_string(&self.private_key));

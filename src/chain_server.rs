@@ -1,21 +1,19 @@
 pub mod block_chain;
-use std::{sync::mpsc::Sender, thread::sleep, time::{self, Duration}};
-use rand::{thread_rng, Rng};
-use reqwest;
+use std::time::Duration;
 
-use block_chain::{transaction::{ self, Transaction }, BlockChain};
-use hyper::{ body::to_bytes, Body, Client, Error, Method, Request, Response, StatusCode, Uri };
+use block_chain::{transaction::Transaction, BlockChain};
+use hyper::{ body::to_bytes, Body, Client, Error, Method, Request, Response, StatusCode };
 use tokio::time::timeout;
 
-use crate::{main, CHANNEL, CONFIG, MAIN_CHAIN, SELF_NUM, UPDATE_LOCK};
+use crate::{CHANNEL, CONFIG, MAIN_CHAIN, SELF_NUM, UPDATE_LOCK};
 
 pub async fn divide_request(req: Request<Body>) -> Result<Response<Body>, Error> {
     match (req.method(), req.uri().path()) {
-        (&Method::GET, "/chainServer/testAlive") => { test_alive_handler(req).await },
-        (&Method::GET, "/chainServer/sayHi") => { say_hi(req).await },
-        (&Method::GET, "/chainServer/getChain") => { get_chain(req).await },
+        (&Method::GET, "/chainServer/testAlive") => { test_alive_handler().await },
+        (&Method::GET, "/chainServer/sayHi") => { say_hi().await },
+        (&Method::GET, "/chainServer/getChain") => { get_chain().await },
         (&Method::POST, "/chainServer/receiveHi") => {receive_hi(req).await },
-        (&Method::GET, "/chainServer/updateChain") => {update_chain(req).await },
+        (&Method::GET, "/chainServer/updateChain") => {update_chain().await },
         (&Method::POST, "/chainServer/receiveChainUpdate") => {receive_chain_update(req).await },
         (&Method::GET, "/chainServer/receiveTransactionBroadcast") => {receive_transaction_broadcast(req).await },
         (&Method::POST, "/chainServer/validAndPushTransaction") => {
@@ -29,13 +27,13 @@ pub async fn divide_request(req: Request<Body>) -> Result<Response<Body>, Error>
     }
 }
 
-pub async fn test_alive_handler(req: Request<Body>) -> Result<Response<Body>, Error> {
+pub async fn test_alive_handler()-> Result<Response<Body>, Error> {
     Ok(Response::new(Body::from("Chain Server is alive")))
 }
 
 pub async fn valid_and_push_transaction(req: Request<Body>) -> Result<Response<Body>, Error> {
     println!("start to valid and push");
-    let mut sender = CHANNEL.0.lock().unwrap().clone();
+    let sender = CHANNEL.0.lock().unwrap().clone();
     sender.send(false).await.unwrap();
     let data = to_bytes(req.into_body()).await.unwrap();
     let transaction:Transaction = serde_json::from_str(&String::from_utf8(data.to_vec()).unwrap()).unwrap();
@@ -69,7 +67,7 @@ pub async fn valid_and_push_transaction(req: Request<Body>) -> Result<Response<B
 }
 
 //实验
-pub async fn say_hi(req: Request<Body>) -> Result<Response<Body>, Error> {
+pub async fn say_hi() -> Result<Response<Body>, Error> {
     println!("starting hi...");
     let client = Client::new();
     let req=Request::builder().uri("http://localhost:9002/chainServer/receiveHi")
@@ -90,9 +88,9 @@ pub async fn receive_hi(req: Request<Body>) -> Result<Response<Body>, Error>{
 }
 
 //TODO:链共识还没做完
-pub async fn update_chain(req: Request<Body>) -> Result<Response<Body>, Error> {
+pub async fn update_chain() -> Result<Response<Body>, Error> {
     println!("!!!!!!!!!!!!!Updating MAINCHAIN...!!!!!!!!!!!!!!");
-    let mut sender = CHANNEL.0.lock().unwrap().clone();
+    let sender = CHANNEL.0.lock().unwrap().clone();
     sender.send(false).await.unwrap();
     let len=CONFIG.lock().unwrap().nodes.len();
     for i in 0..len{
@@ -132,9 +130,9 @@ pub async fn update_chain(req: Request<Body>) -> Result<Response<Body>, Error> {
     Ok(Response::new(Body::from("MAIN_CHAIN updated")))
 }
 
-pub async fn get_chain(req: Request<Body>) -> Result<Response<Body>, Error>{
+pub async fn get_chain() -> Result<Response<Body>, Error>{
     println!("Getting chain");
-    let mut sender = CHANNEL.0.lock().unwrap().clone();
+    let sender = CHANNEL.0.lock().unwrap().clone();
     sender.send(false).await.unwrap();
     let json_string=serde_json::to_string(&MAIN_CHAIN.lock().unwrap().to_owned().clone()).unwrap();
     sender.send(true).await.unwrap();
@@ -142,18 +140,25 @@ pub async fn get_chain(req: Request<Body>) -> Result<Response<Body>, Error>{
     Ok(Response::new(Body::from(json_string)))
 }
 
+//TODO:
 pub fn valid_chain(new_chain:&BlockChain)->bool{
-    return true;
+    if new_chain.chain.len()!=0{
+        return true;
+    }
+    return false;
 }
 
 pub async fn receive_transaction_broadcast(req: Request<Body>)-> Result<Response<Body>, Error>{
     println!("start to valid and push");
-    let mut sender = CHANNEL.0.lock().unwrap().clone();
+    let sender = CHANNEL.0.lock().unwrap().clone();
     sender.send(false).await.unwrap();
     let data = to_bytes(req.into_body()).await.unwrap();
     let transaction:Transaction = serde_json::from_str(&String::from_utf8(data.to_vec()).unwrap()).unwrap();
     println!("start verify");
     let result = MAIN_CHAIN.lock().unwrap().verify_and_add_transaction(transaction);
+    if !result{
+        return Ok(Response::new(Body::from("not added")))
+    }
     sender.send(true).await.unwrap();
     println!("broadcast valid and push complete");
     Ok(Response::new(Body::from("Transacton pool updated")))
@@ -179,7 +184,7 @@ pub async fn ask_for_chain_update(){
         .method("POST").body(Body::from(json_string)).unwrap();
         let req_result=timeout(Duration::from_secs(2), client.request(req)).await;
         match req_result {
-            Ok(v) => {
+            Ok(_) => {
                 println!("asking:node_{} ask done",i);
             },
             Err(_) => {
@@ -192,7 +197,7 @@ pub async fn ask_for_chain_update(){
 pub async fn receive_chain_update(req: Request<Body>)-> Result<Response<Body>, Error>{
     *UPDATE_LOCK.lock().unwrap()=true;
     println!("Receiving chain");
-    let mut sender = CHANNEL.0.lock().unwrap().clone();
+    let sender = CHANNEL.0.lock().unwrap().clone();
     sender.send(false).await.unwrap();
     let data = to_bytes(req.into_body()).await.unwrap();
         let new_chain:BlockChain=serde_json::from_str(&String::from_utf8(data.to_vec()).unwrap()).unwrap();

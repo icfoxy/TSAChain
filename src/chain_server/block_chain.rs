@@ -1,8 +1,6 @@
 pub mod block;
 pub mod transaction;
 
-use std::{thread, time::Duration};
-
 use block::Block;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -66,7 +64,7 @@ impl BlockChain {
                 max_iteration_times,
                 addr.clone(),
                 receiver
-            );
+            ).await;
             if mine_result == 1 {
                 succeeded.push(index);
                 self.reward_pool.push(transaction);
@@ -94,7 +92,6 @@ impl BlockChain {
                 return 0;
             }
             count+=1;
-            tokio::time::sleep(Duration::from_millis(100)).await;
         }
     }
 

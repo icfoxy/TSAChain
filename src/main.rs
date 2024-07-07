@@ -1,17 +1,11 @@
-use core::time;
 use std::{
-    convert::Infallible, fs::File, net::SocketAddr, sync::Mutex, thread::{self, sleep}, time::Duration
+    convert::Infallible, fs::File, net::SocketAddr, sync::Mutex, time::Duration
 };
-use hyper::{Body, Error, Method, Request, Response, Server, StatusCode };
-use chain_server::{ask_for_chain_update, block_chain::{
-    transaction::{ self, tsa::{ Puzzle, Solution }, Transaction },
-    BlockChain,
-}};
+use hyper::Server;
+use chain_server::{ask_for_chain_update, block_chain::BlockChain};
 use hyper::service::{ make_service_fn, service_fn };
 use serde::Deserialize;
-use wallet_server::wallet::{ self, Wallet };
-use tokio::sync::{mpsc::{Receiver, Sender}, Barrier};
-use std::sync::Arc;
+use tokio::sync::mpsc::{Receiver, Sender};
 use std::io::Read;
 
 mod chain_server;
@@ -98,19 +92,6 @@ async fn start_mining(
         }
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
-}
-
-#[allow(dead_code)]
-async fn pause_mining(sender: &Sender<bool>, barrier: Arc<Barrier>) {
-    barrier.wait().await;
-    println!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!pause preparing..!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    sender.send(false).await;
-    tokio::time::sleep(Duration::from_secs(1)).await;
-    sender.send(true).await;
-    tokio::time::sleep(Duration::from_secs(1)).await;
-    sender.send(false).await;
-    tokio::time::sleep(Duration::from_secs(1)).await;
-    sender.send(true).await;
 }
 
 #[tokio::main]

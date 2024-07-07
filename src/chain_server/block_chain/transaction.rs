@@ -1,5 +1,7 @@
 pub mod tsa;
 
+use std::time::Duration;
+
 use ring::digest::{ self, SHA256 };
 use rsa::{ PaddingScheme, PublicKey };
 use serde::{ Deserialize, Serialize };
@@ -36,6 +38,7 @@ pub struct TransactionTransfer {
 }
 
 impl Transaction {
+    #[allow(dead_code)]
     pub fn new(
         sender_addr: String,
         sender_public_key: String,
@@ -96,12 +99,12 @@ impl Transaction {
             &self.sender_signature
         );
         match verify_result {
-            Ok(v) => { true }
-            Err(e) => { false }
+            Ok(_) => { true }
+            Err(_) => { false }
         }
     }
 
-    pub fn mine(
+    pub async fn mine(
         &mut self,
         max_unit_num: usize,
         max_iteration_times: usize,
@@ -111,7 +114,7 @@ impl Transaction {
         let mut unit_num = 10;
         let mut iteration_times = 10;
         let original_time = self.best_solution.get_max_response_time();
-        let mut my_solution = self.best_solution.clone();
+        let mut my_solution:Solution;
         println!("original time:{}", original_time);
         let mut flag = true;
         while unit_num < max_unit_num && iteration_times < max_iteration_times {
@@ -146,6 +149,7 @@ impl Transaction {
                     continue;
                 }
             }
+            tokio::time::sleep(Duration::from_millis(10)).await;
         }
         return 0;
     }
